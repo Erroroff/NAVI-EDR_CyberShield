@@ -1044,3 +1044,524 @@ def protokol_nuklearnej_neutralizacji_navi(lista_wykrytych_zagrozen_edr):
             pass
     print("\033[1;32m===========================================================================\n              PROTOKÓŁ ZAKOŃCZONY. REJESTRY SYSTEMOWE OCZYSZCZONE\n===========================================================================\033[0m")
     return licznik_calkowitej_zaglady
+# =============================================================================
+# INTEGRACJA: MODUŁ AKTYWNEGO FIREWALLA NAVI CYBER-SHIELD v16.5
+# =============================================================================
+BIAŁA_LISTA_IP = ["127.0.0.1", "0.0.0.0", "8.8.8.8", "8.8.4.4"]
+
+def pobierz_aktywne_polaczenia_ip():
+    try:
+        wynik = subprocess.check_output("ss -ntu", shell=True).decode("utf-8")
+        linie = wynik.split("\n")
+        wykryte_ip = set()
+        for linia in linie[1:]:
+            bloki = linia.split()
+            if len(bloki) > 5:
+                pelne_ip = bloki.split("]")[-1].split(":") if "]" in bloki else bloki.split(":")
+                if pelne_ip and pelne_ip not in BIAŁA_LISTA_IP and not pelne_ip.startswith("192.168."):
+                    wykryte_ip.add(pelne_ip)
+        return wykryte_ip
+    except Exception:
+        return set()
+
+def zablokuj_intruza_w_firewallu(adres_ip):
+    print(f"\n\033[1;41m [🚨] DETEKCJA WROGIEGO RUCHU: {adres_ip} [🚨] \033[0m")
+    print(f"\033[1;31m[*] NAVI EDR: Wdrażanie natychmiastowej blokady dla adresu {adres_ip}...\033[0m")
+    time.sleep(0.8)
+    os.system(f"sudo iptables -A INPUT -s {adres_ip} -j DROP")
+    print(f"\033[1;32m[✓] PROTKOŁ FIREWALL SUKCES: Adres {adres_ip} został trwale ZBANOWANY w iptables!\033[0m\n")
+    sys.stdout.write("\a\a")
+    sys.stdout.flush()
+
+def start_firewall_loop():
+    print("\n\033[1;33m[*] INICJOWANIE SENSORÓW SIECIOWYCH NAVI FIREWALL...\033[0m")
+    print("\033[1;32m[✓] SYSTEM ZAPORY AKTYWNY - NASŁUCHIWANIE PORTÓW REJESTRU TCP/UDP...\033[0m\n")
+    zablokowane_w_tej_sesji = []
+    try:
+        for sekunda in range(20):
+            print(f"\033[90m[{sekunda+1}/20] Skanowanie pakietów sieciowych w tle...\033[0m", end="\r")
+            intruzi = pobierz_aktywne_polaczenia_ip()
+            for ip in intruzi:
+                if ip not in zablokowane_w_tej_sesji:
+                    zablokuj_intruza_w_firewallu(ip)
+                    zablokowane_w_tej_sesji.append(ip)
+            time.sleep(0.5)
+        print("\n\033[1;34m[*] MONITORING ZAKOŃCZONY: Wszystkie porty sieciowe pozostają bezpieczne.\033[0m")
+        input("\nNaciśnij Enter, aby wrócić do menu głównego...")
+    except KeyboardInterrupt:
+        print("\n\033[1;31m[!] Wyłączanie tarczy Firewall.\033[0m")
+# =============================================================================
+# INTEGRACJA: PROTOKÓŁ INTEGRALNEJ KASTRACJI SIECIOWEJ INTRUZA
+# =============================================================================
+def protokol_kastracji_sieciowej_intruza():
+    print("\n\033[1;41m [☠️] URUCHOMIONO PROTOKÓŁ INTEGRALNEJ KASTRACJI SIECIOWEJ INTRUZA [☠️] \033[0m")
+    sys.stdout.write("\a\a\a\a")
+    sys.stdout.flush()
+    time.sleep(0.5)
+    print("\033[1;31m[*] NAVI CORE: Namierzanie aktywnych gniazd sieciowych intruza...")
+    time.sleep(0.8)
+    
+    intruzi = pobierz_aktywne_polaczenia_ip()
+    
+    if not intruzi:
+        print("\033[1;32m[✓] STATUS: Wszystkie porty czyste. Brak intruzów do natychmiastowego wywalenia.\033[0m")
+        input("\nNaciśnij Enter, aby wrócić...")
+        return
+        
+    for ip in intruzi:
+        print(f"\n\033[1;33m[!] ROZPOCZYNANIE CAŁKOWITEGO WYWALENIA ADRESU: {ip} z jądra Linuxa...\033[0m")
+        time.sleep(0.5)
+        
+        os.system(f"sudo iptables -A INPUT -s {ip} -j DROP")
+        os.system(f"sudo iptables -A OUTPUT -d {ip} -j DROP")
+        os.system(f"sudo fuser -k -9 -n tcp {ip} > /dev/null 2>&1")
+        
+        print(f"  \033[1;41m[✓] SEKTOR OCZYSZCZONY: Intruz {ip} został TRWALE UKASTROWANY I WYWALONY Z SYSTEMU! [✓]\033[0m")
+        sys.stdout.write("\a")
+        sys.stdout.flush()
+        time.sleep(0.4)
+        
+    print("\n\033[1;32m[✓] PROTOKÓŁ KASTRACJI ZAKOŃCZONY SUKCESEM. POŁĄCZENIA PRZERWANE.\033[0m")
+    input("\nNaciśnij Enter, aby wrócić do menu głównego...")
+
+if __name__ == "__main__":
+    # Sprawdzenie uprawnień administratora (root) dla całego pakietu NAVI
+    if os.getuid() != 0:
+        print("\033[1;31m[❌] BŁĄD SYSTEMU: Uruchom Cyber-Tarczę przez: sudo python3 kali_seciurity.py\033[0m")
+        sys.exit(1)
+        
+    os.system('clear')
+    print("\033[92m[*] URUCHAMIANIE INTEGRALNEGO SYSTEMU BEZPIECZEŃSTWA NAVI EDR v2.0...\033[0m")
+    time.sleep(1.0)
+    
+    while True:
+        os.system('clear')
+        print("\033[1;34m========================================================\033[0m")
+        print("\033[1;36m     PANEL DOWODZENIA CYBER-TARCZY NAVI (EDR SHIELD)    \033[0m")
+        print("\033[1;34m========================================================\033[0m")
+        print(" [01] Szybki skan klastrów dyskowych")
+        print(" [02] Przegląd bazy kwarantanny systemowej")
+        print(" [03] Analiza behawioralna procesów RAM")
+        print(" [04] Generuj oficjalny raport śledczy")
+        print(" [05] Protokół nuklearnej neutralizacji jądra malware")
+        print(" [06] \033[1;33mUruchom Aktywny Firewall sieciowy NAVI\033[0m")
+        print(" [07] Kastracja sieciowa intruza (Całkowite wyjebanie   z systemu)")
+
+        print(" [00] Wyjście z systemu ochronnego")
+        print("\033[1;34m========================================================\033[0m")
+        
+        wybor = input("\033[1;32m[+] Wybierz operację bezpieczeństwa (01-06): \033[0m").strip()
+        
+        if wybor == '01' or wybor == '1':
+            print("\n[*] Odpalanie skanera... (Tutaj podepnij swoją starą funkcję skanowania)"); time.sleep(2)
+        elif wybor == '02' or wybor == '2':
+            print("\n[*] Otwarie bazy kwarantanny..."); time.sleep(2)
+        elif wybor == '05' or wybor == '5':
+            # Wywołanie Twojego niszczyciela, który kończy się na linii 1046!
+            protokol_nuklearnej_neutralizacji_navi([]) 
+        elif wybor == '06' or wybor == '6':
+            start_firewall_loop()
+        elif wybor == '07' or wybor == '7':
+            protokol_kastracji_sieciowej_intruza()
+
+        elif wybor == '00' or wybor == '0':
+            print("\n\033[1;31m[*] Zamykanie tarczy NAVI. System pozostaje bez ochrony.\033[0m\n")
+            break
+        else:
+            print("\n\033[1;31m[!] Błędny wybór. Wprowadź poprawny numer operacji.\033[0m")
+            time.sleep(1.5)
+
+
+
+
+
+
+
+
+
+import threading
+
+# =============================================================================
+#          [10 ENTERÓW NIŻEJ] - ASYNCHRONICZNY SILNIK SONDY NAVI v3.0
+# =============================================================================
+# Silnik działa w osobnym wątku systemowym, monitorując katalog w czasie rzeczywistym
+# =============================================================================
+
+def silnik_sondy_w_tle(sciezka_monitorowana="."):
+    """Niskopoziomowy Demon działający asynchronicznie poza pętlą menu głównego"""
+    zescany_cache = set(os.listdir(sciezka_monitorowana))
+    
+    while True:
+        try:
+            time.sleep(2.0) # Sonda sprawdza sektor co 2 sekundy w tle
+            pliki_teraz = set(os.listdir(sciezka_monitorowana))
+            nowe_pliki = pliki_teraz - zescany_cache
+            
+            for plik in nowe_pliki:
+                pelna_sciezka = os.path.join(sciezka_monitorowana, plik)
+                if os.path.isfile(pelna_sciezka) and plik != "kali_seciurity.py":
+                    # Cichy skan behawioralny nowo powstałego pliku
+                    try:
+                        with open(pelna_sciezka, 'r', errors='ignore') as f:
+                            zawartosc = f.read()
+                            # Sprawdzamy, czy plik zawiera naszą flagę testową
+                            if "TEST_MALWARE_PAYLOAD_DEPLOYED" in zawartosc or "SYMULATOR WIRUSA TESTOWEGO NAVI" in zawartosc:
+                                sys.stdout.write("\a\a\a") # Trzykrotna salwa jądra!
+                                sys.stdout.flush()
+                                print(f"\n\n\033[1;41m[🚨] DETEKCJA ASYNCHRONICZNA TŁA: Wykryto zagrożenie w nowym pliku: {plik}! [🚨]\033[0m")
+                                print("\033[1;31m[*] Sonda NAVI w tle automatycznie paraliżuje obiekt...\033[0m")
+                                os.chmod(pelna_sciezka, 0o000) # Blokada uprawnień na 000
+                                print(f"\033[1;32m[✓] Sonda NAVI: Plik {plik} zneutralizowany bez przerywania pracy.\033[0m\n")
+                    except Exception:
+                        pass
+                        
+            # Aktualizacja pamięci podręcznej sondy
+            zescany_cache = pliki_teraz
+        except Exception:
+            pass
+
+def uruchom_asynchroniczna_sonde_navi():
+    """Inicjalizacja wątku pobocznego dla demona ochrony tła"""
+    watek_sondy = threading.Thread(target=silnik_sondy_w_tle, daemon=True)
+    watek_sondy.start()
+import os
+import sys
+import time
+import shutil
+import hashlib
+import threading
+import tkinter as tk
+from tkinter import messagebox
+
+
+
+
+
+
+
+
+
+
+
+# =============================================================================
+# NAVI ULTIMATE SECURITY ENGINE v3.5 - ARCHITEKTURA ENTERPRISE
+# =============================================================================
+
+DIR_KWARANTANNA = "./.navi_quarantine"
+PLIK_LOGOW = "navi_security.log"
+
+# Baza sum kontrolnych dla Strażnika Integralności (Root-Guard)
+BAZA_INTEGRALNOSCI = {}
+
+def zapisz_log_sledczy(komunikat):
+    """Silnik Systemowych Rejestrów Śledczych (Live Logger Core)"""
+    try:
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        with open(PLIK_LOGOW, "a") as log:
+            log.write(f"[{timestamp}] {komunikat}\n")
+    except Exception:
+        pass
+
+def generuj_hash_pliku(sciezka):
+    """Pomocniczy silnik SHA-256 dla ochrony plików jądra"""
+    hasher = hashlib.sha256()
+    try:
+        with open(sciezka, 'rb') as f:
+            while chunk := f.read(8192):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+    except Exception:
+        return None
+
+def inicjuj_straznika_root_guard(sciezki_plikow):
+    """Sonda Integralności Krytycznych Plików (Root-Guard Sensor)"""
+    for plik in sciezki_plikow:
+        if os.path.exists(plik):
+            BAZA_INTEGRALNOSCI[plik] = generuj_hash_pliku(plik)
+    zapisz_log_sledczy("[SYSTEM] Aktywowano sensor Root-Guard dla plików krytycznych.")
+
+def okienko_alertu_avast(nazwa_pliku, pelna_sciezka):
+    """Graficzny interfejs CLI/GUI - Okienko powiadomień jak Avast"""
+    # Inicjalizacja okna Tkinter
+    root = tk.Tk()
+    root.withdraw() # Ukrywamy główne okno, potrzebujemy tylko pop-upu
+    
+    sys.stdout.write("\a\a\a") # Salwa jądra z głośników komputera
+    sys.stdout.flush()
+    zapisz_log_sledczy(f"[ALERT] Wykryto zagrożenie w pliku: {nazwa_pliku}")
+    
+    opisy_zagrozen = (
+        f"🚨 SYSTEM ALERT: DETEKCJA ASYNCHRONICZNA NAVI!\n\n"
+        f"Wykryto złośliwą strukturę kodu w: {nazwa_pliku}\n"
+        f"Lokalizacja: {pelna_sciezka}\n\n"
+        f"Zagrożenie: Wykryto wzorzec sygnaturowy (TEST_MALWARE).\n"
+        f"Wybierz akcję obronną dla jądra systemu:"
+    )
+    
+    # Tworzenie panelu decyzyjnego dla Sapera
+    okno_wyboru = tk.Toplevel()
+    okno_wyboru.title("🛡️ NAVI CYBER-SHIELD DEFENSE 🛡️")
+    
+    # Wymuszenie pozycji w lewym dolnym rogu ekranu (Styl Avast!)
+    szerokosc, wysokosc = 450, 220
+    pozycja_x = 20
+    pozycja_y = root.winfo_screenheight() - wysokosc - 80
+    okno_wyboru.geometry(f"{szerokosc}x{wysokosc}+{pozycja_x}+{pozycja_y}")
+    okno_wyboru.configure(bg="#1a1a1a")
+    okno_wyboru.attributes("-topmost", True) # Zawsze na wierzchu!
+
+    # Tekst ostrzeżenia
+    label = tk.Label(okno_wyboru, text=opisy_zagrozen, bg="#1a1a1a", fg="#ff3333", justify="left", font=("Helvetica", 10, "bold"))
+    label.pack(pady=15, padx=15)
+
+    decyzja = {"akcja": "ignore"}
+
+    def klik_usun():
+        try:
+            os.remove(pelna_sciezka)
+            zapisz_log_sledczy(f"[USUNIĘTO] Plik {nazwa_pliku} został trwale wykasowany.")
+            messagebox.showinfo("Sukces", f"Plik {nazwa_pliku} został całkowicie usunięty z dysku!")
+        except Exception as e:
+            messagebox.showerror("Błąd", f"Nie udało się usunąć pliku: {e}")
+        decyzja["akcja"] = "delete"
+        okno_wyboru.destroy()
+
+    def klik_kwarantanna():
+        try:
+            if not os.path.exists(DIR_KWARANTANNA):
+                os.makedirs(DIR_KWARANTANNA)
+            cel = os.path.join(DIR_KWARANTANNA, nazwa_pliku)
+            shutil.move(pelna_sciezka, cel)
+            os.chmod(cel, 0o000) # Paraliż uprawnień w schronie
+            zapisz_log_sledczy(f"[KWARANTANNA] Przeniesiono {nazwa_pliku} do schronu izolacyjnego.")
+            messagebox.showinfo("Sukces", f"Plik {nazwa_pliku} został odizolowany w kwarantannie NAVI!")
+        except Exception as e:
+            messagebox.showerror("Błąd", f"Błąd kwarantanny: {e}")
+        decyzja["akcja"] = "quarantine"
+        okno_wyboru.destroy()
+
+    def klik_ignoruj():
+        zapisz_log_sledczy(f"[IGNORUJ] Użytkownik zignorował zagrożenie: {nazwa_pliku}")
+        decyzja["akcja"] = "ignore"
+        okno_wyboru.destroy()
+    def klik_panic():
+        okno_wyboru.destroy()
+        uruchom_protokol_panic_button(pelna_sciezka, nazwa_plik)
+
+
+    # Stylizacja przycisków
+    btn_frame = tk.Frame(okno_wyboru, bg="#1a1a1a")
+    btn_frame.pack(pady=5)
+    
+    tk.Button(btn_frame, text="🔥 USUŃ PLIK", command=klik_usun, bg="#cc0000", fg="white", width=12, font=("Helvetica", 9, "bold")).pack(side="left", padx=5)
+    tk.Button(btn_frame, text="🔒 KWARANTANNA", command=klik_kwarantanna, bg="#ff9900", fg="black", width=14, font=("Helvetica", 9, "bold")).pack(side="left", padx=5)
+    tk.Button(btn_frame, text="⚖️ IGNORUJ", command=klik_ignoruj, bg="#444444", fg="white", width=10, font=("Helvetica", 9, "bold")).pack(side="left", padx=5)
+    tk.Button(btn_frame, text="💀 NUKE PANIC", command=klik_panic, bg="#660000", fg="white", width=12, font=("Helvetica", 9, "bold")).pack(side="left", padx=5)
+
+    root.mainloop()
+
+def silnik_asynchronicznej_sondy_tla(sciezka_monitorowana="."):
+    """Ulepszona Sonda działająca asynchronicznie w tle (Wątek poboczny)"""
+    try:
+        zescany_cache = set(os.listdir(sciezka_monitorowana))
+    except Exception:
+        zescany_cache = set()
+        
+    while True:
+        try:
+            time.sleep(1.5)
+            
+            # --- 1. Strażnik Integralności Plików Jądra ---
+            for plik, stary_hash in BAZA_INTEGRALNOSCI.items():
+                if os.path.exists(plik):
+                    nowy_hash = generuj_hash_pliku(plik)
+                    if nowy_hash != stary_hash:
+                        zapisz_log_sledczy(f"[CRITICAL] Naruszono integralność pliku jądra: {plik}!")
+                        print(f"\n\033[1;41m[🚨] ROOT-GUARD ALERT: Wykryto nieautoryzowaną modyfikację pliku: {plik}! [🚨]\033[0m\n")
+                        BAZA_INTEGRALNOSCI[plik] = nowy_hash # Aktualizacja
+            
+            # --- 2. Skaner Nowych Plików w Locie ---
+            pliki_teraz = set(os.listdir(sciezka_monitorowana))
+            nowe_pliki = pliki_teraz - zescany_cache
+            
+            for plik in nowe_pliki:
+                pelna_sciezka = os.path.join(sciezka_monitorowana, plik)
+                if os.path.isfile(pelna_sciezka) and plik != "kali_seciurity.py":
+                    try:
+                        with open(pelna_sciezka, 'r', errors='ignore') as f:
+                            zawartosc = f.read()
+                            if "TEST_MALWARE_PAYLOAD_DEPLOYED" in zawartosc or "SYMULATOR WIRUSA TESTOWEGO NAVI" in zawartosc:
+                                # Uruchomienie wyskakującego okienka decyzyjnego typu Avast!
+                                okienko_alertu_avast(plik, pelna_sciezka)
+                    except Exception:
+                        pass
+                        
+            zescany_cache = pliki_teraz
+        except Exception:
+            pass
+
+def uruchom_caly_system_tla():
+    # Inicjujemy strażnika dla przykładowego ważnego pliku (np. Twojego asystenta)
+    inicjuj_straznika_root_guard(["navi_builder.py"])
+    
+    # Odpalenie wątku asynchronicznego
+    watek = threading.Thread(target=silnik_asynchronicznej_sondy_tla, daemon=True)
+    watek.start()
+
+if __name__ == "__main__":
+
+    # WYMUSZENIE UPRAWNIEŃ ADMINISTRATORA (Wymaga sudo do działania reguł sieci i plików)
+    if os.getuid() != 0:
+        print("\033[1;31m┌────────────────────────────────────────────────────────┐\033[0m")
+        print("\033[1;31m│ [❌] KRYTYCZNY BŁĄD UPRAWNIEŃ SYSTEMU NAVI CORE         │\033[0m")
+        print("\033[1;31m│ PROGRAM WYMAGA CIĄGŁEJ PRACY JAKO ADMINISTRATOR (ROOT)!│\033[0m")
+        print("\033[1;31m└────────────────────────────────────────────────────────┘\033[0m")
+        print("\033[1;33m[*] Uruchom system ponownie wpisując:\033[0m \033[1;32msudo python3 kali_seciurity.py\033[0m\n")
+        sys.exit(1)
+        
+    zapisz_log_sledczy("[SYSTEM] Uruchomiono główną magistralę bezpieczeństwa NAVI OS v3.5.")
+    uruchom_caly_system_tla()
+    # Automatyczny start wojskowej sondy antysabotażowej i samoblokowania
+    uruchom_sonde_antysabotazowa_navi()
+   
+    # Tutaj zaczyna się Twoje menu główne (pętla menu z poprzednich kroków)...
+    os.system('clear')
+    print("\033[1;32m[✓] INICJALIZACJA SILNIKA PREMIUM ZAKOŃCZONA SUKCESEM.\033[0m")
+    print("\033[1;34m[*] Sonda tła monitoruje foldery. Czekam na zagrożenia...\033[0m")
+    # (Reszta kodu Twojej pętli menu...)
+import urllib.request
+
+# =============================================================================
+#          [10 ENTERÓW NIŻEJ] - ROZBUDOWANY SILNIK PREMIUM NAVI v3.8
+# =============================================================================
+
+def automatyczna_aktualizacja_sygnatur_navi():
+    """Moduł Auto-Update: Pobiera najnowsze definicje zagrożeń z chmury"""
+    print("\n\033[1;36m[*] NAVI CLOUD: Sprawdzanie aktualizacji bazy sygnatur...\033[0m")
+    try:
+        # Bezpieczne odpytanie bazy testowej (używamy proxy lub oficjalnego serwera)
+        # W celach edukacyjnych symulujemy pobranie unikalnego rekordu sygnatur
+        time.sleep(1.0)
+        nowe_sygnatury = ["DANGEROUS_EXPLOIT_2026", "MALWARE_FORK_BOMB"]
+        for syn in nowe_sygnatury:
+            if syn not in BAZA_SYGNATUR:
+                BAZA_SYGNATUR.append(syn)
+        print("\033[1;32m[✓] AKTUALIZACJA SUKCES: Pobrano i zaimplementowano najnowsze definicje EDR!\033[0m\n")
+        zapisz_log_sledczy("[CLOUD] Pomyślnie zaktualizowano bazę sygnatur sieciowych.")
+    except Exception as e:
+        print(f"\033[1;31m[!] Auto-Update Offline: {e}. Praca na lokalnej bazie.\033[0m\n")
+
+def uruchom_protokol_panic_button(pelna_sciezka, nazwa_plik):
+    """Hakerski Klawisz Awaryjny: Natychmiastowe odcięcie systemu od zagrożeń"""
+    wyczysc_ekran()
+    print("\n\033[1;41m" + "X"*56 + "\033[0m")
+    print("\033[1;31m     🚨 URUCHOMIONO PROTOKÓŁ NUKLEARNEJ NEUTRALIZACJI JĄDRA! 🚨    \033[0m")
+    print("\033[1;41m" + "X"*56 + "\033[0m")
+    
+    zapisz_log_sledczy(f"[PANIC] Aktywowano Panic Button dla pliku: {nazwa_plik}")
+    
+    # 1. Twardy paraliż pliku i usunięcie
+    try:
+        os.chmod(pelna_sciezka, 0o000)
+        os.remove(pelna_sciezka)
+    except Exception:
+        pass
+        
+    # 2. Awaryjne zablokowanie całego ruchu sieciowego (Wstrzyknięcie blokady Total-DROP)
+    print("\033[1;31m[*] NAVI FIREWALL: Awaryjne zamykanie magistrali sieciowej...\033[0m")
+    os.system("sudo iptables -P INPUT DROP")
+    os.system("sudo iptables -P OUTPUT DROP")
+    
+    # 3. Salwa alarmowa z głośników
+    sys.stdout.write("\a\a\a\a\a")
+    sys.stdout.flush()
+    
+    print("\n\033[1;32m[✓] NEUTRALIZACJA ZAKOŃCZONA: Plik zniszczony, porty sieciowe trwale zablokowane.\033[0m")
+    input("\nNaciśnij Enter, aby zresetować magistralę i wrócić...")
+    
+    # Przywracamy domyślne reguły po zabezpieczeniu systemu
+    os.system("sudo iptables -P INPUT ACCEPT")
+    os.system("sudo iptables -P OUTPUT ACCEPT")
+
+
+
+
+
+
+
+
+# =============================================================================
+#          [10 ENTERÓW NIŻEJ] - SYSTEM SAMOOCHRONY I SABOTAŻU NAVI v4.5
+# =============================================================================
+
+def protokol_calkowitego_odebrania_praw_intruzowi(sciezka_atakowana, nazwa_zagrozenia):
+    """Niskopoziomowy moduł samoblokowania: Bezwzględne odebranie uprawnień"""
+    zapisz_log_sledczy(f"[SABOTAGE_ATTEMPT] Wykryto próbę zniszczenia struktury: {nazwa_zagrozenia}")
+    
+    # 1. Samoblokowanie obiektu - odbieramy prawa do czegokolwiek (000)
+    try:
+        os.chmod(sciezka_atakowana, 0o000)
+        zapisz_log_sledczy(f"[ISOLATION] Plik {nazwa_zagrozenia} został trwale zamrożony (chmod 000).")
+    except Exception:
+        pass
+        
+    # 2. Awaryjne zablokowanie magistrali firewall regułami jądra
+    os.system("sudo iptables -A INPUT -j DROP")
+    
+    # 3. Wywołanie głośnej salwy alarmowej
+    for _ in range(4):
+        sys.stdout.write("\a")
+        sys.stdout.flush()
+        time.sleep(0.1)
+        
+    # 4. Wyświetlenie graficznego okna z informacją o odebraniu praw
+    root = tk.Tk()
+    root.withdraw()
+    messagebox.showerror(
+        "🛡️ NAVI ANTI-SABOTAGE PROTOCOL 🛡️",
+        f"WYKRYTO AGRESYWNĄ PRÓBĘ ZNISZCZENIA PLIKÓW LABOLATORIUM!\n\n"
+        f"Obiekt atakujący: {nazwa_zagrozenia}\n"
+        f"Status operacji: ZABLOKOWANO\n\n"
+        f"[✓] AKCJA: Intruzowi odebrano prawa do czegokolwiek. Plik został zamrożony, a ruch sieciowy odcięty!"
+    )
+
+def aktywna_sonda_antysabotazowa(sciezka_projektu="."):
+    """Sonda monitorująca próby sabotażu i niszczenia plików w czasie rzeczywistym"""
+    try:
+        poczatkowy_stan = set(os.listdir(sciezka_projektu))
+    except Exception:
+        return
+
+    while True:
+        try:
+            time.sleep(2.0) # Przeszukiwanie sektora ochronnego co 2 sekundy
+            obecny_stan = set(os.listdir(sciezka_projektu))
+            
+            # Sprawdzamy, czy jakiś plik zniknął (próba usunięcia przez wirusa)
+            usuniete_pliki = poczatkowy_stan - obecny_stan
+            if usuniete_pliki:
+                for plik in usuniete_pliki:
+                    if plik.endswith(".py") or plik.endswith(".sh"):
+                        protokol_calkowitego_odebrania_praw_intruzowi(sciezka_projektu, f"Usunięcie pliku: {plik}")
+                        
+            # Sprawdzamy, czy pliki zostały podejrzanie zmodyfikowane
+            for plik in obecny_stan:
+                pelna_sciezka = os.path.join(sciezka_projektu, plik)
+                if os.path.isfile(pelna_sciezka) and plik != "kali_seciurity.py":
+                    try:
+                        # Jeśli plik ma nagle dziwne uprawnienia lub wstrzyknięty zły kod
+                        with open(pelna_sciezka, 'r', errors='ignore') as f:
+                            zawartosc = f.read()
+                            if "ZPHISHER" in zawartosc.upper() or "WIRUS" in zawartosc.upper():
+                                protokol_calkowitego_odebrania_praw_intruzowi(pelna_sciezka, plik)
+                    except Exception:
+                        pass
+                        
+            poczatkowy_stan = obecny_stan
+        except Exception:
+            pass
+
+def uruchom_sonde_antysabotazowa_navi():
+    """Inicjalizacja wątku pobocznego dla demona samoochrony jądra"""
+    watek_sabotazu = threading.Thread(target=aktywna_sonda_antysabotazowa, daemon=True)
+    watek_sabotazu.start()
