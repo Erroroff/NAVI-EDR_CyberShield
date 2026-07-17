@@ -1,3 +1,43 @@
+# =============================================================================
+#          GLOBAL LANGUAGE CORE - AUTOMATIC PL/EN TRANSLATOR v4.5
+# =============================================================================
+import locale
+
+def get_system_lang():
+    try:
+        return locale.getdefaultlocale()[:2].lower()
+    except Exception:
+        return "en"
+
+SYS_LANG = get_system_lang()
+
+def translate_text(text):
+    if SYS_LANG != "pl":
+        en_dict = {
+            "[SPYWARE / PHISHING] - Wyłudzanie poświadczeń i kont": "[SPYWARE / PHISHING] - Credential harvesting and account theft",
+            "[TROJAN / DOWNLOADER] - Ciche pobieranie kodu przez sieć": "[TROJAN / DOWNLOADER] - Silent network code download",
+            "[BACKDOOR / EXPLOIT] - Ukryte polecenia powłoki": "[BACKDOOR / EXPLOIT] - Hidden shell command execution",
+            "[MALWARE / DESTRUCTOR] - Usuwanie klastrów jądra": "[MALWARE / DESTRUCTOR] - Kernel cluster destruction",
+            "[SABOTAGE / INTRUSION] - Wymuszenie zatrzymania jądra": "[SABOTAGE / INTRUSION] - Forced kernel halt intrusion",
+            "[MALWARE / WORM] - Masowe niszczenie rekordów": "[MALWARE / WORM] - Mass record destruction worm",
+            "[WZORZEC TESTOWY] - Sygnatura EICAR": "[TEST PATTERN] - Standard EICAR signature",
+            "FTP (Proba transferu danych w tle)": "FTP (Background data transfer attempt)",
+            "SSH (Potok zdalnego dostepu hakerskiego)": "SSH (Remote hacking access tunnel)",
+            "Telnet (Niezaszyfrowany protokol konsoli)": "Telnet (Unencrypted console protocol)",
+            "HTTP (Aktywny podrobiony panel phishingowy)": "HTTP (Active spoofed phishing panel)",
+            "HTTPS (Ukryty tunel Command and Control)": "HTTPS (Hidden Command & Control tunnel)",
+            "Metasploit Reverse Shell (Krytyczny Backdoor)": "Metasploit Reverse Shell (Critical Backdoor)",
+            "Zlosliwy port nasluchu tła": "Malicious background listener port",
+            "WYKRYTO AGRESYWNĄ PRÓBĘ ZNISZCZENIA PLIKÓW LABOLATORIUM": "CRITICAL WARNING: AGGRESSIVE SABOTAGE ATTACK DETECTED IN LOGS",
+            "Intruzowi odebrano uprawnienia": "Intruder forcefully stripped of all system permissions via chmod 000",
+            "Sonda antysabotażowa wykryła wroga": "Anti-Sabotage background probe successfully isolated the threat",
+            "Uruchomiono główną magistralę bezpieczeństwa NAVI OS": "Main security bus initialized. NAVI OS active 24/7",
+            "Automatyczny start wojskowej sondy antysabotażowej": "Automated launch of military anti-sabotage probe"
+        }
+        return en_dict.get(text, text)
+    return text
+# =============================================================================
+
 import os
 import time
 import random
